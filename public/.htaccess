@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirige todas las peticiones al front controller,
+    # excepto los archivos y directorios que existen fisicamente.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+
+    # Conserva la cabecera Authorization (Apache la descarta en CGI/FastCGI).
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+
+# Evita el listado de directorios
+Options -Indexes
