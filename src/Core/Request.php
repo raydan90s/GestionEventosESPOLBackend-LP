@@ -68,11 +68,18 @@ final class Request
     {
         // Cuando se sirve desde XAMPP en un subdirectorio, elimina el prefijo
         // del script (ej. /GestionEventosESPOLBackend-LP/public).
-        $scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
-        $base = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+        //
+        // El servidor embebido (php -S ... server.php) se excluye: ahi PHP pone
+        // en SCRIPT_NAME la ruta solicitada y no el script, de modo que
+        // dirname() devolveria el primer segmento de la URL (/api) y lo
+        // recortaria, dejando /health y rompiendo todas las rutas.
+        if (PHP_SAPI !== 'cli-server') {
+            $scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+            $base = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
 
-        if ($base !== '' && $base !== '.' && str_starts_with($path, $base)) {
-            $path = substr($path, strlen($base));
+            if ($base !== '' && $base !== '.' && str_starts_with($path, $base)) {
+                $path = substr($path, strlen($base));
+            }
         }
 
         $path = '/' . trim($path, '/');
