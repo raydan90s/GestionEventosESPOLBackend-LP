@@ -7,6 +7,7 @@ namespace App\Core;
 use App\Core\Exceptions\HttpException;
 use App\Core\Exceptions\ValidationException;
 use App\Core\Middleware\Cors;
+use App\Core\Middleware\RequestLogger;
 use Throwable;
 
 /**
@@ -44,6 +45,10 @@ final class App
     public function run(): void
     {
         $request = Request::capture();
+
+        // Antes de Cors: asi tambien quedan registradas las peticiones de
+        // verificacion previa (preflight), que terminan en un exit().
+        RequestLogger::start($request);
 
         try {
             Cors::apply($request);

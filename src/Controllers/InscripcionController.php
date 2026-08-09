@@ -31,11 +31,13 @@ final class InscripcionController extends Controller
     {
         $eventoId = $this->idParam($request);
 
+        // Las etiquetas son las que ve el estudiante en el formulario: sin ellas
+        // el mensaje de error mostraria el nombre de la columna ("nombre_estudiante").
         $datos = Validator::make($request->body())
-            ->required('nombre_estudiante')->string('nombre_estudiante', 3, 120)
-            ->required('correo')->email('correo')
-            ->optionalString('matricula', 20)
-            ->optionalString('telefono', 20)
+            ->required('nombre_estudiante', 'nombre')->string('nombre_estudiante', 3, 120, 'nombre')
+            ->required('correo', 'correo')->email('correo', 'correo')
+            ->optionalString('matricula', 20, 'matricula')
+            ->optionalString('telefono', 20, 'telefono')
             ->validated();
 
         // La validacion de cupos ocurre dentro de una transaccion en el modelo.

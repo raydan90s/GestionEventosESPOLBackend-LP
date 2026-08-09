@@ -10,6 +10,10 @@ return [
         'env'   => Env::get('APP_ENV', 'local'),
         'debug' => Env::bool('APP_DEBUG', false),
         'url'   => Env::get('APP_URL', 'http://localhost:8000'),
+
+        // Imprime una linea por peticion en la salida de error. Si no se
+        // define, sigue a APP_DEBUG. Ver Core\Middleware\RequestLogger.
+        'log_requests' => Env::bool('LOG_REQUESTS', Env::bool('APP_DEBUG', false)),
     ],
 
     // Conexion a Supabase (PostgreSQL) via PDO.

@@ -34,7 +34,8 @@ GestionEventosESPOLBackend-LP/
 │   │   │   ├── HttpException.php
 │   │   │   └── ValidationException.php
 │   │   ├── Middleware/
-│   │   │   └── Cors.php
+│   │   │   ├── Cors.php
+│   │   │   └── RequestLogger.php  # Log de peticiones para desarrollo
 │   │   ├── App.php              # Arranque y manejo global de errores
 │   │   ├── Autoloader.php       # Autoload PSR-4 sin Composer
 │   │   ├── Config.php
@@ -62,6 +63,7 @@ GestionEventosESPOLBackend-LP/
 Cliente (React)
    -> public/index.php        (front controller)
    -> Core\App                (boot: .env, config, rutas)
+   -> Core\Middleware\RequestLogger  (solo en desarrollo)
    -> Core\Middleware\Cors
    -> Core\Router             (resuelve metodo + ruta)
    -> Controllers\*           (valida con Core\Validator)
@@ -134,6 +136,51 @@ Requiere `mod_rewrite` activo.
 ```bash
 curl http://localhost:8000/api/health
 ```
+
+---
+
+## Ver las peticiones que llegan
+
+El servidor embebido de PHP **no escribe ninguna linea de acceso para las peticiones
+que resuelve `server.php`**: solo muestra `Accepted` y `Closing`, sin decir que
+endpoint se pidio. Por eso el proyecto trae su propio log.
+
+Con `APP_DEBUG=true` (o `LOG_REQUESTS=true` en el `.env`), cada peticion imprime una
+linea en la terminal donde corre el servidor:
+
+```
+[10:47:50] GET    200 1243.2ms  /api/health
+[10:48:14] GET    200 1664.0ms  /api/eventos/1/asistentes?q=vera
+[10:47:52] POST   409 1925.7ms  /api/eventos/1/inscripciones  body={"nombre_estudiante":"Ana Vera","correo":"ana@espol.edu.ec"}
+[10:47:52] GET    404    0.9ms  /api/ruta-que-no-existe
+[10:48:15] OPTIONS 204    0.4ms  /api/eventos/1/inscripciones
+```
+
+Metodo, codigo de estado, duracion, ruta con su query string y el cuerpo JSON.
+Tambien registra las peticiones de verificacion previa (`OPTIONS`), utiles cuando
+falla el CORS. Bajo Apache/XAMPP la linea va al error log del servidor.
+
+Para apagarlo sin tocar `APP_DEBUG`:
+
+```ini
+LOG_REQUESTS=false
+```
+
+> Dejalo apagado fuera de desarrollo: el cuerpo de una inscripcion lleva el correo
+> y el telefono del estudiante. Las claves tipo `password` o `token` se enmascaran,
+> y los cuerpos de mas de 500 caracteres se recortan.
+
+### Los errores de PHP no se estan guardando
+
+Aparte de lo anterior: XAMPP fija en su `php.ini`
+
+```ini
+error_log = C:\xampp\php\logs\php_error_log
+log_errors = On
+```
+
+pero **ese directorio no existe**, asi que todo warning o error de PHP se descarta en
+silencio. Se arregla creando la carpeta `C:\xampp\php\logs`.
 
 ---
 

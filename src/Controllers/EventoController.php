@@ -93,16 +93,18 @@ final class EventoController extends Controller
     /** POST /api/eventos */
     public function store(Request $request): void
     {
+        // Las etiquetas son las que ve el organizador en el formulario: sin ellas
+        // el mensaje de error mostraria el nombre de la columna ("cupos_maximos").
         $datos = Validator::make($request->body())
-            ->required('titulo')->string('titulo', 5, 150)
-            ->required('categoria_id')->integer('categoria_id', 1)
-            ->required('ubicacion')->string('ubicacion', 3, 150)
-            ->required('fecha_evento')->datetime('fecha_evento', true)
-            ->required('cupos_maximos')->integer('cupos_maximos', 1, 10000)
-            ->optionalString('descripcion', 2000)
-            ->optionalString('organizador', 120)
-            ->optionalString('imagen_url', 500)
-            ->in('estado', self::ESTADOS)
+            ->required('titulo', 'titulo')->string('titulo', 5, 150, 'titulo')
+            ->required('categoria_id', 'categoria')->integer('categoria_id', 1, null, 'categoria')
+            ->required('ubicacion', 'lugar')->string('ubicacion', 3, 150, 'lugar')
+            ->required('fecha_evento', 'fecha')->datetime('fecha_evento', true, 'fecha')
+            ->required('cupos_maximos', 'aforo')->integer('cupos_maximos', 1, 10000, 'aforo')
+            ->optionalString('descripcion', 2000, 'descripcion')
+            ->optionalString('organizador', 120, 'organizador')
+            ->optionalString('imagen_url', 500, 'imagen')
+            ->in('estado', self::ESTADOS, 'estado')
             ->validated();
 
         if (!$this->categorias->exists((int) $datos['categoria_id'])) {
@@ -122,15 +124,15 @@ final class EventoController extends Controller
         }
 
         $datos = Validator::make($request->body())
-            ->string('titulo', 5, 150)
-            ->integer('categoria_id', 1)
-            ->string('ubicacion', 3, 150)
-            ->datetime('fecha_evento')
-            ->integer('cupos_maximos', 1, 10000)
-            ->optionalString('descripcion', 2000)
-            ->optionalString('organizador', 120)
-            ->optionalString('imagen_url', 500)
-            ->in('estado', self::ESTADOS)
+            ->string('titulo', 5, 150, 'titulo')
+            ->integer('categoria_id', 1, null, 'categoria')
+            ->string('ubicacion', 3, 150, 'lugar')
+            ->datetime('fecha_evento', false, 'fecha')
+            ->integer('cupos_maximos', 1, 10000, 'aforo')
+            ->optionalString('descripcion', 2000, 'descripcion')
+            ->optionalString('organizador', 120, 'organizador')
+            ->optionalString('imagen_url', 500, 'imagen')
+            ->in('estado', self::ESTADOS, 'estado')
             ->validated();
 
         if (isset($datos['categoria_id']) && !$this->categorias->exists((int) $datos['categoria_id'])) {

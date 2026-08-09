@@ -76,9 +76,9 @@ Para solventar la problemática de desinformación y dispersión actual, la plat
 **Patrón de Arquitectura:** Cliente-Servidor implementando MVC (Modelo-Vista-Controlador). El proyecto adopta una arquitectura desacoplada. El cliente (Frontend) asume la responsabilidad de la Vista. Por otro lado, el servidor (Backend) centraliza el Controlador (gestionando las rutas, validaciones) y el Modelo (interactuando directamente con la base de datos PostgreSQL).
 
 **Herramientas y Frameworks:**
-* **Framework:** React (JavaScript) para el Frontend.
-* **API:** Se desarrollará una API RESTful nativa en PHP.
-* **Servicios:** XAMPP como suite de infraestructura local y PostgreSQL como motor de base de datos relacional.
+* **Framework:** React (JavaScript) para el Frontend, con Vite como herramienta de construcción y Tailwind CSS para los estilos.
+* **API:** Se desarrollará una API RESTful nativa en PHP, sin frameworks externos.
+* **Servicios:** XAMPP como suite de infraestructura local (Apache y PHP 8) y PostgreSQL como motor de base de datos relacional, alojado en Supabase para que los tres integrantes trabajen sobre una misma instancia.
 
 ## 7. Lenguajes de Programación
 
@@ -86,9 +86,9 @@ Para solventar la problemática de desinformación y dispersión actual, la plat
 * *Pros:* Alta expresividad (Writability) y estructuras gramaticales familiares (Readability).
 * *Contras:* Baja ortogonalidad y tipado dinámico que reduce parcialmente la confiabilidad (Reliability).
 
-**Front-end: JavaScript / TypeScript (React)**
-* *Pros:* Excelente soporte para abstracción (Writability) y mejora en confiabilidad gracias al tipado estático estricto de TypeScript (Reliability).
-* *Contras:* Incrementa la verbosidad del código, disminuyendo la simplicidad inicial frente a JavaScript puro (Readability).
+**Front-end: JavaScript (React)**
+* *Pros:* Excelente soporte para abstracción (Writability): los componentes y los *hooks* encapsulan vista y estado en unidades reutilizables, y la sintaxis de la familia C resulta familiar (Readability).
+* *Contras:* Tipado dinámico y sin verificación estática en tiempo de compilación, lo que reduce la confiabilidad (Reliability). Se compensa documentando los contratos de datos con JSDoc y validando toda entrada en el servidor, que es la única frontera que el cliente no puede saltarse.
 
 ## 8. Prototipo de Baja Fidelidad
 *Herramienta de Diseño Utilizada: Figma.*
@@ -102,5 +102,6 @@ Para solventar la problemática de desinformación y dispersión actual, la plat
 1. MDN Web Docs, "MVC (Model-View-Controller)", Mozilla.
 2. Meta Platforms, Inc., "React: The library for web and native user interfaces", React Documentation.
 3. The PHP Group, "PHP Manual", PHP Documentation.
-4. Oracle Corporation, "MySQL Reference Manual", MySQL Documentation.
-5. Apache Friends, "XAMPP Apache + MariaDB + PHP + Perl", Apache Friends.
+4. The PostgreSQL Global Development Group, "PostgreSQL Documentation", PostgreSQL.
+5. Apache Friends, "XAMPP: entorno local de Apache y PHP", Apache Friends.
+6. Supabase Inc., "Supabase Documentation — Database", Supabase.
