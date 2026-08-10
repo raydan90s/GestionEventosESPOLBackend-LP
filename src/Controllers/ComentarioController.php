@@ -17,60 +17,60 @@ use App\Models\Evento;
  */
 final class ComentarioController extends Controller
 {
-    private Comentario $comentarios;
-    private Evento $eventos;
+    private Comentario $modeloComentario;
+    private Evento $modeloEvento;
 
     public function __construct()
     {
-        $this->comentarios = new Comentario();
-        $this->eventos = new Evento();
+        $this->modeloComentario = new Comentario();
+        $this->modeloEvento = new Evento();
     }
 
     /** GET /api/eventos/{id}/comentarios */
     public function index(Request $request): void
     {
-        $eventoId = $this->idParam($request);
+        $idDelEvento = $this->idParam($request);
 
-        if (!$this->eventos->exists($eventoId)) {
+        if (!$this->modeloEvento->exists($idDelEvento)) {
             throw HttpException::notFound('El evento solicitado no existe.');
         }
 
-        $limite = (int) ($request->query('limite', 50));
-        $offset = (int) ($request->query('offset', 0));
+        $cantidad = (int) ($request->query('limite', 50));
+        $inicio = (int) ($request->query('offset', 0));
 
         Response::json([
             'ok'    => true,
-            'total' => $this->comentarios->totalPorEvento($eventoId),
-            'data'  => $this->comentarios->porEvento($eventoId, $limite, $offset),
+            'total' => $this->modeloComentario->contarComentariosDeEvento($idDelEvento),
+            'data'  => $this->modeloComentario->obtenerComentariosDeEvento($idDelEvento, $cantidad, $inicio),
         ]);
     }
 
     /** POST /api/eventos/{id}/comentarios */
     public function store(Request $request): void
     {
-        $eventoId = $this->idParam($request);
+        $idDelEvento = $this->idParam($request);
 
-        if (!$this->eventos->exists($eventoId)) {
+        if (!$this->modeloEvento->exists($idDelEvento)) {
             throw HttpException::notFound('El evento sobre el que intenta comentar no existe.');
         }
 
-        $datos = Validator::make($request->body())
+        $datosValidados = Validator::make($request->body())
             ->required('autor')->string('autor', 3, 120)
             ->required('contenido')->string('contenido', 3, 1000)
             ->validated();
 
-        $this->created($this->comentarios->crear($eventoId, $datos), 'Comentario publicado correctamente.');
+        $this->created($this->modeloComentario->registrarComentario($idDelEvento, $datosValidados), 'Comentario publicado correctamente.');
     }
 
     /** DELETE /api/comentarios/{id} */
     public function destroy(Request $request): void
     {
-        $id = $this->idParam($request);
+        $idDeComentario = $this->idParam($request);
 
-        if (!$this->comentarios->delete($id)) {
+        if (!$this->modeloComentario->delete($idDeComentario)) {
             throw HttpException::notFound('El comentario que intenta eliminar no existe.');
         }
 
-        $this->ok(['id' => $id], 'Comentario eliminado correctamente.');
+        $this->ok(['id' => $idDeComentario], 'Comentario eliminado correctamente.');
     }
 }

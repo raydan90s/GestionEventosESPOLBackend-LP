@@ -15,10 +15,10 @@ final class Comentario extends Model
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function porEvento(int $eventoId, int $limite = 50, int $offset = 0): array
+    public function obtenerComentariosDeEvento(int $idEvento, int $maxResultados = 50, int $salto = 0): array
     {
-        $limite = max(1, min(100, $limite));
-        $offset = max(0, $offset);
+        $maxResultados = max(1, min(100, $maxResultados));
+        $salto = max(0, $salto);
 
         return $this->select(
             sprintf(
@@ -27,44 +27,44 @@ final class Comentario extends Model
                   WHERE evento_id = :evento_id
                   ORDER BY created_at DESC
                   LIMIT %d OFFSET %d',
-                $limite,
-                $offset
+                $maxResultados,
+                $salto
             ),
-            ['evento_id' => $eventoId]
+            ['evento_id' => $idEvento]
         );
     }
 
-    public function totalPorEvento(int $eventoId): int
+    public function contarComentariosDeEvento(int $idEvento): int
     {
-        $row = $this->selectOne(
+        $registro = $this->selectOne(
             'SELECT COUNT(*) AS total FROM comentarios WHERE evento_id = :evento_id',
-            ['evento_id' => $eventoId]
+            ['evento_id' => $idEvento]
         );
 
-        return (int) ($row['total'] ?? 0);
+        return (int) ($registro['total'] ?? 0);
     }
 
     /**
-     * @param array<string, mixed> $datos
+     * @param array<string, mixed> $payload
      * @return array<string, mixed>
      */
-    public function crear(int $eventoId, array $datos): array
+    public function registrarComentario(int $idEvento, array $payload): array
     {
-        $stmt = $this->db->prepare(
+        $sentencia = $this->db->prepare(
             'INSERT INTO comentarios (evento_id, autor, contenido)
              VALUES (:evento_id, :autor, :contenido)
              RETURNING id, evento_id, autor, contenido, created_at'
         );
 
-        $stmt->execute([
-            'evento_id' => $eventoId,
-            'autor'     => $datos['autor'],
-            'contenido' => $datos['contenido'],
+        $sentencia->execute([
+            'evento_id' => $idEvento,
+            'autor'     => $payload['autor'],
+            'contenido' => $payload['contenido'],
         ]);
 
-        /** @var array<string, mixed> $comentario */
-        $comentario = $stmt->fetch();
+        /** @var array<string, mixed> $nuevoComentario */
+        $nuevoComentario = $sentencia->fetch();
 
-        return $comentario;
+        return $nuevoComentario;
     }
 }
