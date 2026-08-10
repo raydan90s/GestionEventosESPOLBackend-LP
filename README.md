@@ -25,10 +25,12 @@ GestionEventosESPOLBackend-LP/
 ├── src/
 │   ├── Controllers/             # Controladores (validan y responden)
 │   │   ├── CategoriaController.php
-│   │   ├── ComentarioController.php
 │   │   ├── EventoController.php
+│   │   ├── FeedbackController.php
 │   │   ├── HealthController.php
 │   │   └── InscripcionController.php
+│   ├── Services/                # Lógica de negocio (refactoring)
+│   │   └── FeedbackService.php
 │   ├── Core/                    # Micro-framework propio
 │   │   ├── Exceptions/
 │   │   │   ├── HttpException.php
@@ -48,8 +50,8 @@ GestionEventosESPOLBackend-LP/
 │   │   └── Validator.php
 │   └── Models/                  # Modelos (acceso a datos y reglas de negocio)
 │       ├── Categoria.php
-│       ├── Comentario.php
 │       ├── Evento.php
+│       ├── Feedback.php
 │       ├── Inscripcion.php
 │       └── Model.php            # Modelo base
 ├── server.php                   # Router del servidor embebido de PHP
@@ -268,7 +270,7 @@ activos y eventos ya realizados (HTTP 409).
 
 `GET /api/eventos/{id}/asistentes` acepta `?q=` para buscar por nombre, matricula o correo.
 
-### Comentarios — *Eimmy Ochoa*
+### Comentarios (Feedback) — *Eimmy Ochoa*
 
 | Metodo | Ruta | Descripcion |
 | :--- | :--- | :--- |
