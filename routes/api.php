@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\CategoriaController;
-use App\Controllers\ComentarioController;
+use App\Controllers\FeedbackController;
 use App\Controllers\EventoController;
 use App\Controllers\HealthController;
 use App\Controllers\InscripcionController;
@@ -35,7 +35,7 @@ return static function (Router $router): void {
     $router->delete('/api/inscripciones/{id}', [InscripcionController::class, 'destroy']);
 
     // --- Comentarios (Eimmy Ochoa) ------------------------------------------
-    $router->get('/api/eventos/{id}/comentarios', [ComentarioController::class, 'index']);   // Ver comentarios
-    $router->post('/api/eventos/{id}/comentarios', [ComentarioController::class, 'store']);  // Escribir comentario
-    $router->delete('/api/comentarios/{id}', [ComentarioController::class, 'destroy']);
+    $router->get('/api/eventos/{id}/comentarios', [FeedbackController::class, 'index']);   // Ver comentarios
+    $router->post('/api/eventos/{id}/comentarios', [FeedbackController::class, 'store']);  // Escribir comentario
+    $router->delete('/api/comentarios/{id}', [FeedbackController::class, 'destroy']);
 };
