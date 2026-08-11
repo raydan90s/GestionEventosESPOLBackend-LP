@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Core\Exceptions\HttpException;
+use Throwable;
+
 /**
  * Eventos del catalogo (RF: Crear evento / Ver catalogo de eventos - Juliana Burgos).
  */
@@ -96,11 +99,18 @@ final class Evento extends Model
     }
 
     /**
+     * Crea un evento validando que la categoria indicada exista
+     * (misma idea que Inscripcion::registrar valida sus reglas antes de escribir).
+     *
      * @param array<string, mixed> $datos
      * @return array<string, mixed>
      */
     public function crear(array $datos): array
     {
+        if (!$this->categoriaExiste((int) $datos['categoria_id'])) {
+            throw HttpException::badRequest('La categoria indicada no existe.');
+        }
+
         $sql = 'INSERT INTO eventos
                     (titulo, descripcion, categoria_id, ubicacion, fecha_evento,
                      cupos_maximos, cupos_disponibles, organizador, imagen_url, estado)
@@ -134,50 +144,83 @@ final class Evento extends Model
     /**
      * Actualiza solo los campos presentes en $datos.
      *
+     * Corre dentro de una transaccion con bloqueo de fila (SELECT ... FOR UPDATE),
+     * igual que Inscripcion::registrar / cancelar, para que el ajuste de aforo no
+     * quede desactualizado si llega una inscripcion al mismo tiempo.
+     *
      * @param array<string, mixed> $datos
      * @return array<string, mixed>|null
      */
     public function actualizar(int $id, array $datos): ?array
     {
-        $permitidos = ['titulo', 'descripcion', 'categoria_id', 'ubicacion', 'fecha_evento', 'organizador', 'imagen_url', 'estado'];
-        $sets = [];
-        $bindings = ['id' => $id];
+        if (isset($datos['categoria_id']) && !$this->categoriaExiste((int) $datos['categoria_id'])) {
+            throw HttpException::badRequest('La categoria indicada no existe.');
+        }
 
-        foreach ($permitidos as $campo) {
-            if (array_key_exists($campo, $datos)) {
-                $sets[] = sprintf('%s = :%s', $campo, $campo);
-                $bindings[$campo] = $datos[$campo];
+        $this->db->beginTransaction();
+
+        try {
+            $stmt = $this->db->prepare(
+                'SELECT cupos_maximos, cupos_disponibles FROM eventos WHERE id = :id FOR UPDATE'
+            );
+            $stmt->execute(['id' => $id]);
+            $actual = $stmt->fetch();
+
+            if ($actual === false) {
+                throw HttpException::notFound('El evento que intenta actualizar no existe.');
             }
-        }
 
-        // El aforo se ajusta conservando la cantidad ya inscrita.
-        // Se usan dos marcadores distintos porque PDO no permite repetir un
-        // parametro con nombre cuando las consultas preparadas no se emulan.
-        if (array_key_exists('cupos_maximos', $datos)) {
-            $sets[] = 'cupos_disponibles = :nuevo_aforo - (cupos_maximos - cupos_disponibles)';
-            $sets[] = 'cupos_maximos = :cupos_maximos';
-            $bindings['nuevo_aforo'] = $datos['cupos_maximos'];
-            $bindings['cupos_maximos'] = $datos['cupos_maximos'];
-        }
+            $permitidos = ['titulo', 'descripcion', 'categoria_id', 'ubicacion', 'fecha_evento', 'organizador', 'imagen_url', 'estado'];
+            $sets = [];
+            $bindings = ['id' => $id];
 
-        if ($sets === []) {
+            foreach ($permitidos as $campo) {
+                if (array_key_exists($campo, $datos)) {
+                    $sets[] = sprintf('%s = :%s', $campo, $campo);
+                    $bindings[$campo] = $datos[$campo];
+                }
+            }
+
+            // El aforo se ajusta conservando la cantidad ya inscrita, calculada
+            // con los valores que acabamos de leer bajo bloqueo de fila.
+            if (array_key_exists('cupos_maximos', $datos)) {
+                $inscritos = (int) $actual['cupos_maximos'] - (int) $actual['cupos_disponibles'];
+
+                if ((int) $datos['cupos_maximos'] < $inscritos) {
+                    throw HttpException::conflict(
+                        sprintf('El aforo no puede ser menor que las %d inscripciones ya registradas.', $inscritos)
+                    );
+                }
+
+                $sets[] = 'cupos_maximos = :cupos_maximos';
+                $sets[] = 'cupos_disponibles = :cupos_disponibles';
+                $bindings['cupos_maximos'] = $datos['cupos_maximos'];
+                $bindings['cupos_disponibles'] = (int) $datos['cupos_maximos'] - $inscritos;
+            }
+
+            if ($sets !== []) {
+                $sets[] = 'updated_at = NOW()';
+
+                $this->execute(
+                    sprintf('UPDATE eventos SET %s WHERE id = :id', implode(', ', $sets)),
+                    $bindings
+                );
+            }
+
+            $this->db->commit();
+
             return $this->detalle($id);
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            throw $e;
         }
-
-        $sets[] = 'updated_at = NOW()';
-
-        $this->execute(
-            sprintf('UPDATE eventos SET %s WHERE id = :id', implode(', ', $sets)),
-            $bindings
-        );
-
-        return $this->detalle($id);
     }
 
-    public function totalInscritos(int $id): int
+    private function categoriaExiste(int $categoriaId): bool
     {
-        $row = $this->selectOne('SELECT COUNT(*) AS total FROM inscripciones WHERE evento_id = :id', ['id' => $id]);
-
-        return (int) ($row['total'] ?? 0);
+        return $this->selectOne('SELECT 1 FROM categorias WHERE id = :id', ['id' => $categoriaId]) !== null;
     }
 }

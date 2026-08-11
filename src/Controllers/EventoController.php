@@ -9,7 +9,6 @@ use App\Core\Exceptions\HttpException;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Validator;
-use App\Models\Categoria;
 use App\Models\Evento;
 
 /**
@@ -20,12 +19,10 @@ final class EventoController extends Controller
     private const ESTADOS = ['activo', 'cancelado', 'finalizado'];
 
     private Evento $eventos;
-    private Categoria $categorias;
 
     public function __construct()
     {
         $this->eventos = new Evento();
-        $this->categorias = new Categoria();
     }
 
     /**
@@ -107,10 +104,8 @@ final class EventoController extends Controller
             ->in('estado', self::ESTADOS, 'estado')
             ->validated();
 
-        if (!$this->categorias->exists((int) $datos['categoria_id'])) {
-            throw HttpException::badRequest('La categoria indicada no existe.');
-        }
-
+        // La categoria se valida dentro del modelo, igual que Inscripcion
+        // valida sus reglas de negocio antes de escribir en la base de datos.
         $this->created($this->eventos->crear($datos), 'Evento creado correctamente.');
     }
 
@@ -118,10 +113,6 @@ final class EventoController extends Controller
     public function update(Request $request): void
     {
         $id = $this->idParam($request);
-
-        if (!$this->eventos->exists($id)) {
-            throw HttpException::notFound('El evento que intenta actualizar no existe.');
-        }
 
         $datos = Validator::make($request->body())
             ->string('titulo', 5, 150, 'titulo')
@@ -135,20 +126,9 @@ final class EventoController extends Controller
             ->in('estado', self::ESTADOS, 'estado')
             ->validated();
 
-        if (isset($datos['categoria_id']) && !$this->categorias->exists((int) $datos['categoria_id'])) {
-            throw HttpException::badRequest('La categoria indicada no existe.');
-        }
-
-        if (isset($datos['cupos_maximos'])) {
-            $inscritos = $this->eventos->totalInscritos($id);
-
-            if ((int) $datos['cupos_maximos'] < $inscritos) {
-                throw HttpException::conflict(
-                    sprintf('El aforo no puede ser menor que las %d inscripciones ya registradas.', $inscritos)
-                );
-            }
-        }
-
+        // Existencia del evento, existencia de la categoria y el chequeo de
+        // aforo vs. inscritos ocurren dentro del modelo, bajo la misma
+        // transaccion que ajusta los cupos.
         $this->ok($this->eventos->actualizar($id, $datos), 'Evento actualizado correctamente.');
     }
 
@@ -157,11 +137,9 @@ final class EventoController extends Controller
     {
         $id = $this->idParam($request);
 
-        if (!$this->eventos->exists($id)) {
+        if (!$this->eventos->delete($id)) {
             throw HttpException::notFound('El evento que intenta eliminar no existe.');
         }
-
-        $this->eventos->delete($id);
 
         $this->ok(['id' => $id], 'Evento eliminado correctamente.');
     }
