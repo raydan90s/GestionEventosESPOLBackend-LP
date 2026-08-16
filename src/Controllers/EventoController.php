@@ -68,9 +68,12 @@ final class EventoController extends Controller
 
         $eventos = $this->eventos->catalogo($filtros);
 
+        // El total es el de la consulta completa, no el de esta pagina: con
+        // 60 eventos y limite 50, count($eventos) diria 50 y el frontend no
+        // podria saber que faltan 10 mas.
         Response::json([
             'ok'    => true,
-            'total' => count($eventos),
+            'total' => $this->eventos->contarCatalogo($filtros),
             'data'  => $eventos,
         ]);
     }
