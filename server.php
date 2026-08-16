@@ -16,7 +16,17 @@ $publicPath = __DIR__ . '/public';
 $requested = $publicPath . str_replace('/', DIRECTORY_SEPARATOR, $uri);
 
 if ($uri !== '/' && is_file($requested)) {
-    return false; // Deja que el servidor embebido sirva el archivo tal cual.
+    // Se sirve aqui mismo en vez de devolver false: "devolver false" delega
+    // el archivo en el servidor embebido, pero este lo busca relativo a su
+    // propio docroot -la carpeta desde la que se invoco "php -S", no
+    // necesariamente "public/"-, y con el comando documentado (ejecutado
+    // desde la raiz del proyecto) esos dos caminos no coinciden. Servirlo
+    // a mano no depende de con que docroot se haya arrancado el comando.
+    header('Content-Type: ' . (mime_content_type($requested) ?: 'application/octet-stream'));
+    header('Content-Length: ' . (string) filesize($requested));
+    readfile($requested);
+
+    return true;
 }
 
 require $publicPath . '/index.php';

@@ -27,6 +27,7 @@ return static function (Router $router): void {
     $router->get('/api/eventos/{id}', [EventoController::class, 'show']);
     $router->post('/api/eventos', [EventoController::class, 'store']);     // Crear evento
     $router->put('/api/eventos/{id}', [EventoController::class, 'update']);
+    $router->post('/api/eventos/{id}/imagen', [EventoController::class, 'imagen']); // Subir imagen
     $router->delete('/api/eventos/{id}', [EventoController::class, 'destroy']);
 
     // --- Inscripciones y asistentes (Diego Parrales) ------------------------
