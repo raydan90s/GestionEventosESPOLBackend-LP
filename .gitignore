@@ -8,3 +8,7 @@
 .idea/
 Thumbs.db
 .DS_Store
+
+# Imágenes subidas: la carpeta se versiona, su contenido no.
+/public/storage/eventos/*
+!/public/storage/eventos/.gitkeep

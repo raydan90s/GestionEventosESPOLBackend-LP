@@ -33,12 +33,14 @@ final class Evento extends Model
           INNER JOIN categorias c ON c.id = e.categoria_id';
 
     /**
-     * Catalogo filtrable por categoria, rango de fechas, texto y disponibilidad.
+     * Condiciones del catalogo, compartidas entre `catalogo()` y
+     * `contarCatalogo()`: el total tiene que salir de exactamente los mismos
+     * filtros que la pagina, o la paginacion del frontend contaria mal.
      *
      * @param array<string, mixed> $filtros
-     * @return array<int, array<string, mixed>>
+     * @return array{0: array<int, string>, 1: array<string, mixed>}
      */
-    public function catalogo(array $filtros = []): array
+    private function condicionesCatalogo(array $filtros): array
     {
         $where = [];
         $bindings = [];
@@ -83,6 +85,19 @@ final class Evento extends Model
             $where[] = 'e.fecha_evento < NOW()';
         }
 
+        return [$where, $bindings];
+    }
+
+    /**
+     * Catalogo filtrable por categoria, rango de fechas, texto y disponibilidad.
+     *
+     * @param array<string, mixed> $filtros
+     * @return array<int, array<string, mixed>>
+     */
+    public function catalogo(array $filtros = []): array
+    {
+        [$where, $bindings] = $this->condicionesCatalogo($filtros);
+
         $sql = self::SELECT_BASE;
 
         if ($where !== []) {
@@ -99,6 +114,27 @@ final class Evento extends Model
         $sql .= sprintf(' LIMIT %d OFFSET %d', $limite, $offset);
 
         return $this->select($sql, $bindings);
+    }
+
+    /**
+     * Total de eventos que cumplen los mismos filtros que `catalogo()`, sin
+     * `LIMIT`/`OFFSET`. Mismo patron que `Feedback::contarPorEvento`.
+     *
+     * @param array<string, mixed> $filtros
+     */
+    public function contarCatalogo(array $filtros = []): int
+    {
+        [$where, $bindings] = $this->condicionesCatalogo($filtros);
+
+        $sql = 'SELECT COUNT(*) AS total FROM eventos e';
+
+        if ($where !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+
+        $registro = $this->selectOne($sql, $bindings);
+
+        return (int) ($registro['total'] ?? 0);
     }
 
     /** @return array<string, mixed>|null */
