@@ -223,6 +223,7 @@ Filtros de `GET /api/eventos` (query string):
 | `estado` | `activo` | `activo`, `cancelado` o `finalizado` |
 | `solo_disponibles` | `true` | Solo eventos con cupos libres |
 | `solo_proximos` | `true` | Solo eventos futuros |
+| `solo_pasados` | `true` | Solo eventos ya realizados, del mas reciente al mas antiguo (lo ignora `solo_proximos` si van juntos) |
 | `limite` / `offset` | `20` / `0` | Paginacion (limite maximo 100) |
 
 ```bash

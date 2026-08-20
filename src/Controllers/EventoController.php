@@ -28,7 +28,7 @@ final class EventoController extends Controller
     /**
      * GET /api/eventos
      * Filtros: categoria_id, fecha_desde, fecha_hasta, q, estado,
-     *          solo_disponibles, solo_proximos, limite, offset
+     *          solo_disponibles, solo_proximos, solo_pasados, limite, offset
      */
     public function index(Request $request): void
     {
@@ -38,6 +38,7 @@ final class EventoController extends Controller
             'estado'           => $request->query('estado'),
             'solo_disponibles' => filter_var($request->query('solo_disponibles', false), FILTER_VALIDATE_BOOLEAN),
             'solo_proximos'    => filter_var($request->query('solo_proximos', false), FILTER_VALIDATE_BOOLEAN),
+            'solo_pasados'     => filter_var($request->query('solo_pasados', false), FILTER_VALIDATE_BOOLEAN),
             'limite'           => $request->query('limite'),
             'offset'           => $request->query('offset'),
         ];

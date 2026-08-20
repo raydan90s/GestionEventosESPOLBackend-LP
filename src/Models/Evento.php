@@ -77,13 +77,22 @@ final class Evento extends Model
             $where[] = 'e.fecha_evento >= NOW()';
         }
 
+        // Historico. Es el contrario de solo_proximos y no se combinan: pedir
+        // los dos a la vez no devolveria nada, asi que el que gana es proximos.
+        if (empty($filtros['solo_proximos']) && !empty($filtros['solo_pasados'])) {
+            $where[] = 'e.fecha_evento < NOW()';
+        }
+
         $sql = self::SELECT_BASE;
 
         if ($where !== []) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
 
-        $sql .= ' ORDER BY e.fecha_evento ASC';
+        // De lo que viene se mira primero lo mas cercano; del historico, lo mas
+        // reciente, que es lo que el usuario acaba de vivir.
+        $historico = empty($filtros['solo_proximos']) && !empty($filtros['solo_pasados']);
+        $sql .= $historico ? ' ORDER BY e.fecha_evento DESC' : ' ORDER BY e.fecha_evento ASC';
 
         $limite = isset($filtros['limite']) ? max(1, min(100, (int) $filtros['limite'])) : 50;
         $offset = isset($filtros['offset']) ? max(0, (int) $filtros['offset']) : 0;
